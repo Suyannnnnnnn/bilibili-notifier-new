@@ -1,0 +1,42 @@
+import time
+import subprocess
+import psutil
+
+# -------------------------- 配置
+# 要定时运行的脚本名
+TARGET_SCRIPT = "bilibili_followed_dynamics.py"
+# 间隔 10 分钟(秒)
+INTERVAL = 5 * 60
+
+
+# --------------------------
+
+def is_script_running(script_name):
+    """检测目标Python脚本是否正在运行"""
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+        try:
+            cmd = proc.info.get('cmdline')
+            if cmd and len(cmd) > 1:
+                # 匹配 python xxx.py
+                if script_name in cmd[-1]:
+                    return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            continue
+    return False
+
+
+def run_target_script():
+    print(f"[{time.ctime()}] 启动脚本: {TARGET_SCRIPT}")
+    subprocess.Popen(["python", TARGET_SCRIPT])
+
+
+if __name__ == "__main__":
+    # 先安装依赖：pip install psutil
+    while True:
+        if is_script_running(TARGET_SCRIPT):
+            print(f"[{time.ctime()}] {TARGET_SCRIPT} 已在运行，跳过本次执行")
+        else:
+            run_target_script()
+
+        print(f"等待5分钟后再次检测...\n")
+        time.sleep(INTERVAL)
